@@ -2,7 +2,7 @@ const { pool } = require("../config/db.js");
 
 exports.getAllReviewsWithAllDetails = async () => {
     try {
-        const [rows] = await pool.query(
+        const result = await pool.query(
             `SELECT
                 r.review_id,
                 r.emp_id,
@@ -20,6 +20,7 @@ exports.getAllReviewsWithAllDetails = async () => {
             JOIN 
                 EmployeeData emp ON r.emp_id = emp.emp_id`
         );
+        const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
         return rows;
     } catch (e) {
         console.error('Error fetching all reviews with details: ', e);
@@ -29,7 +30,7 @@ exports.getAllReviewsWithAllDetails = async () => {
 
 exports.getReviewByEmployeeId = async (review_id) => {
     try {
-        const [rows] = await pool.query(
+        const result = await pool.query(
             `SELECT
                 r.review_id,
                 r.emp_id,
@@ -52,7 +53,8 @@ exports.getReviewByEmployeeId = async (review_id) => {
             WHERE
                 r.review_id = ?`, [review_id]
         );
-        return rows[0];
+        const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
+        return rows && rows[0] ? rows[0] : null;
     } catch (e) {
         console.error('Error fetching review for employee: ', e);
         throw e;
@@ -68,11 +70,12 @@ exports.addReview = async (review) => {
         }
         const formattedReviewDate = parsedReviewDate.toISOString().split('T')[0];
 
-        const [result] = await pool.query(
+        const result = await pool.query(
             `INSERT INTO Reviews (emp_id, reviewer_emp_id, department_id, review_date, review_text, rating)
             VALUES (?, ?, ?, ?, ?, ?)`, [emp_id, reviewer_emp_id, department_id, formattedReviewDate, review_text, rating] 
         );
-        return result;
+        const affected = result && (result.affectedRows || result.rowCount) ? (result.affectedRows || result.rowCount) : 0;
+        return { affectedRows: affected };
     } catch (e) {
         console.error('Error creating review: ', e);
         throw e;
@@ -82,7 +85,7 @@ exports.addReview = async (review) => {
 exports.updateReview = async (review_id, reviewData) => {
     const { emp_id, reviewer_emp_id, department_id, review_date, review_text, rating } = reviewData
     try {
-        const [result] = await pool.query(
+        const result = await pool.query(
             `UPDATE Reviews 
             SET 
                 emp_id = ?, 
@@ -94,10 +97,11 @@ exports.updateReview = async (review_id, reviewData) => {
             WHERE review_id = ?`, 
             [emp_id, reviewer_emp_id, department_id, review_date, review_text, rating, review_id]
         );
-        if (result.affectedRows === 0) {
+        const affected = result && (result.affectedRows || result.rowCount) ? (result.affectedRows || result.rowCount) : 0;
+        if (affected === 0) {
             throw new Error(`Review with ID ${review_id} not found`);
         }
-        return result;
+        return { affectedRows: affected };
     } catch (e) {
         console.error('Error updating review: ', e);
         throw e;
@@ -106,13 +110,14 @@ exports.updateReview = async (review_id, reviewData) => {
 
 exports.deleteReview = async (review_id) => {
     try {
-        const [result] = await pool.query(
+        const result = await pool.query(
             'DELETE FROM Reviews WHERE review_id = ?', [review_id]
         );
-        if (result.affectedRows === 0) {
+        const affected = result && (result.affectedRows || result.rowCount) ? (result.affectedRows || result.rowCount) : 0;
+        if (affected === 0) {
             throw new Error(`Review with ID ${review_id} not found`);
         }
-        return result;
+        return { affectedRows: affected };
     } catch (e) {
         console.error('Error deleting review: ', e);
         throw e;

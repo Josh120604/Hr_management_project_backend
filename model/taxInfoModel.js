@@ -3,8 +3,9 @@ const { pool } = require("../config/db.js");
 // READ
 exports.getTaxInfoById = async (emp_id) => {
     try {
-        const [rows] = await pool.query('SELECT tax_code FROM EmployeeTax WHERE emp_id = ?', [emp_id]);
-        return rows[0];
+    const result = await pool.query('SELECT tax_code FROM EmployeeTax WHERE emp_id = ?', [emp_id]);
+    const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
+    return rows && rows[0] ? rows[0] : null;
     } catch (e) {
         console.error('Error fetching tax info: ', e);
         throw e;
@@ -15,8 +16,9 @@ exports.getTaxInfoById = async (emp_id) => {
 exports.createTaxInfo = async (taxInfo) => {
     const {emp_id, tax_code} = taxInfo;
     try {
-        const [result] = await pool.query('INSERT INTO EmployeeTax(emp_id, tax_code) VALUES (?, ?)', [emp_id, tax_code]);
-        if (result.affectedRows === 0) {
+        const result = await pool.query('INSERT INTO EmployeeTax(emp_id, tax_code) VALUES (?, ?)', [emp_id, tax_code]);
+        const affected = result && result.affectedRows ? result.affectedRows : (result && result.rowCount ? result.rowCount : 0);
+        if (affected === 0) {
             throw new Error('Failed to create tax information');
         }
         return {message: 'Tax information created successfully'}
@@ -30,8 +32,9 @@ exports.createTaxInfo = async (taxInfo) => {
 exports.updateTaxInfo = async (emp_id, taxInfoUpdate) => {
     const {tax_code} = taxInfoUpdate;
     try {
-        const [result] = await pool.query('UPDATE EmployeeTax SET tax_code = ? WHERE emp_id = ?', [tax_code, emp_id]);
-        if (result.affectedRows === 0 ) {
+        const result = await pool.query('UPDATE EmployeeTax SET tax_code = ? WHERE emp_id = ?', [tax_code, emp_id]);
+        const affected = result && result.affectedRows ? result.affectedRows : (result && result.rowCount ? result.rowCount : 0);
+        if (affected === 0 ) {
             return {message: 'No tax information found or no changes made'};
         }
         return {message: 'Tax information updated successfully'}
@@ -44,8 +47,9 @@ exports.updateTaxInfo = async (emp_id, taxInfoUpdate) => {
 // DELETE
 exports.deleteTaxInfo = async (emp_id) => {
     try {
-        const [result] = await pool.query('DELETE FROM EmployeeTax WHERE emp_id = ?', [emp_id]);
-        if (result.affectedRows === 0 ) {
+        const result = await pool.query('DELETE FROM EmployeeTax WHERE emp_id = ?', [emp_id]);
+        const affected = result && result.affectedRows ? result.affectedRows : (result && result.rowCount ? result.rowCount : 0);
+        if (affected === 0 ) {
             return {message: 'No tex information found to delete'};
         }
         return {message: 'Tax information deleted successfully'}

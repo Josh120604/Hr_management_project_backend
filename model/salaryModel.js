@@ -3,7 +3,7 @@ const { pool } = require("../config/db.js");
 // GET ALL | READ
 exports.getAllSalariesWithAllDetails = async () => {
     try {
-        const [rows] = await pool.query(
+        const result = await pool.query(
             `SELECT
                 s.emp_id,
                 emp.name,
@@ -22,7 +22,8 @@ exports.getAllSalariesWithAllDetails = async () => {
             JOIN 
                 EmployeeData emp ON s.emp_id = emp.emp_id`
         );
-        return rows;
+    const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
+    return rows;
     } catch (e) {
         console.error('Error fetching all salaries with all details: ', e);
         throw e;
@@ -32,7 +33,7 @@ exports.getAllSalariesWithAllDetails = async () => {
 // GET BY ID | READ
 exports.getSalaryDetailsByIdAndDate = async (emp_id, effective_date) => {
     try {
-        const [rows] = await pool.query(
+        const result = await pool.query(
             `SELECT
                 s.*,
                 emp.name,
@@ -55,7 +56,8 @@ exports.getSalaryDetailsByIdAndDate = async (emp_id, effective_date) => {
                 s.emp_id = ? AND s.effective_date = ?`,
             [emp_id, effective_date]
         );
-        return rows[0]; 
+    const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
+    return rows && rows[0] ? rows[0] : null; 
     } catch (e) {
         console.error('Error fetching salary record with details: ', e);
         throw e;
@@ -66,12 +68,14 @@ exports.getSalaryDetailsByIdAndDate = async (emp_id, effective_date) => {
 exports.createSalary = async (salary) => {
     const {emp_id, department_id, hours_worked, deductions} = salary;
     try {
-        const [employeeRows] = await pool.query('SELECT emp_id FROM EmployeeData WHERE emp_id = ?', [emp_id]);
-        if (employeeRows.length === 0) {
+        const employeeResult = await pool.query('SELECT emp_id FROM EmployeeData WHERE emp_id = ?', [emp_id]);
+        const employeeRows = employeeResult && employeeResult.rows ? employeeResult.rows : (Array.isArray(employeeResult) ? employeeResult[0] : employeeResult);
+        if (!employeeRows || employeeRows.length === 0) {
             throw new Error(`Employee with ID ${emp_id} not found`);
         }
-        const [departmentRows] = await pool.query('SELECT hourly_rate FROM department WHERE department_id = ?', [department_id]);
-        if (departmentRows.length === 0) {
+        const departmentResult = await pool.query('SELECT hourly_rate FROM department WHERE department_id = ?', [department_id]);
+        const departmentRows = departmentResult && departmentResult.rows ? departmentResult.rows : (Array.isArray(departmentResult) ? departmentResult[0] : departmentResult);
+        if (!departmentRows || departmentRows.length === 0) {
             throw new Error(`Department with ID ${department_id} not found`);
         }
         const hourlyRate = departmentRows[0].hourly_rate;
@@ -80,12 +84,13 @@ exports.createSalary = async (salary) => {
 
         const calcFinalSalary = parseFloat((calcBaseSalary - deductions).toFixed(2));
         
-        const [result] = await pool.query(
-            `INSERT INTO salary(emp_id, effective_date, department_id, hours_worked, deductions, base_salary, final_salary)
-            VALUES (?, LAST_DAY(CURDATE()), ?, ?, ?, ?, ?)`, [emp_id, department_id, hours_worked, deductions, calcBaseSalary, calcFinalSalary]
-        );
-
-        if (result.affectedRows === 0) {
+        // Replace MySQL LAST_DAY(CURDATE()) with Postgres end-of-month expression: (date_trunc('month', CURRENT_DATE) + interval '1 month' - interval '1 day')::date
+        const effectiveDateExpr = `(date_trunc('month', CURRENT_DATE) + interval '1 month' - interval '1 day')::date`;
+        const insertSql = `INSERT INTO salary(emp_id, effective_date, department_id, hours_worked, deductions, base_salary, final_salary)
+            VALUES (?, ${effectiveDateExpr}, ?, ?, ?, ?, ?)`;
+        const insertResult = await pool.query(insertSql, [emp_id, department_id, hours_worked, deductions, calcBaseSalary, calcFinalSalary]);
+        const affected = insertResult && insertResult.affectedRows ? insertResult.affectedRows : (insertResult && insertResult.rowCount ? insertResult.rowCount : 0);
+        if (affected === 0) {
             throw new Error('Failed to insert new salary');
         }
 
@@ -101,11 +106,11 @@ exports.createSalary = async (salary) => {
 exports.updateSalary = async (emp_id, effective_date, salaryData) => {
     const {department_id, hours_worked, deductions, base_salary, final_salary} = salaryData;
     try {
-        const [result] = await pool.query(
-            'UPDATE salary SET department_id = ?, hours_worked = ?, deductions = ?, department = ?, base_salary = ?, final_salary = ? WHERE employee_id = ? AND effective_date = ?', [department_id, hours_worked, deductions, base_salary, final_salary, emp_id, effective_date]
+        const result = await pool.query(
+            'UPDATE salary SET department_id = ?, hours_worked = ?, deductions = ?, base_salary = ?, final_salary = ? WHERE emp_id = ? AND effective_date = ?', [department_id, hours_worked, deductions, base_salary, final_salary, emp_id, effective_date]
         );
-
-        if (result.affectedRows === 0) {
+        const affectedRows = result && (result.affectedRows || result.rowCount) ? (result.affectedRows || result.rowCount) : 0;
+        if (affectedRows === 0) {
             return {message: 'No salary record found or no changes made'}
         }
 
@@ -119,11 +124,11 @@ exports.updateSalary = async (emp_id, effective_date, salaryData) => {
 // DELETE 
 exports.deleteSalary = async (emp_id, effective_date) => {
     try {
-        const [result] = await pool.query(
+        const result = await pool.query(
             'DELETE FROM salary WHERE emp_id = ? AND effective_date = ?', [emp_id, effective_date]
         );
-
-        if (result.affectedRows === 0) {
+        const affectedRows = result && (result.affectedRows || result.rowCount) ? (result.affectedRows || result.rowCount) : 0;
+        if (affectedRows === 0) {
             return {message: 'No salary record found to delete'}
         }
         return {message: 'Salary record deleted successfully'};

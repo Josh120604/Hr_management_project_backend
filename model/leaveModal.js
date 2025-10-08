@@ -7,8 +7,8 @@ const getLeaveRecords = async (emp_id = null) => {
                 LT.leave_id,
                 LT.emp_id,
                 ED.name AS EmployeeName,
-                DATE_FORMAT(LT.leave_start, '%Y-%m-%d') AS leave_start,
-                DATE_FORMAT(LT.leave_end, '%Y-%m-%d') AS leave_end,
+                to_char(LT.leave_start::date, 'YYYY-MM-DD') AS leave_start,
+                to_char(LT.leave_end::date, 'YYYY-MM-DD') AS leave_end,
                 LT.leave_reason,
                 LT.leave_status
             FROM
@@ -25,8 +25,9 @@ const getLeaveRecords = async (emp_id = null) => {
 
         sql += ` ORDER BY LT.leave_start DESC;`; 
 
-        const [rows] = await pool.query(sql, params);
-        return rows;
+    const result = await pool.query(sql, params);
+    const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
+    return rows;
     } catch (error) {
         console.error("Error in getLeaveRecords model:", error.message);
         throw new Error("Failed to retrieve leave records from the database.");
@@ -40,8 +41,8 @@ const getPendingLeaveRecords = async () => {
                 LT.leave_id,
                 LT.emp_id,
                 ED.name AS EmployeeName,
-                DATE_FORMAT(LT.leave_start, '%Y-%m-%d') AS leave_start,
-                DATE_FORMAT(LT.leave_end, '%Y-%m-%d') AS leave_end,
+                to_char(LT.leave_start::date, 'YYYY-MM-DD') AS leave_start,
+                to_char(LT.leave_end::date, 'YYYY-MM-DD') AS leave_end,
                 LT.leave_reason,
                 LT.leave_status
             FROM
@@ -52,8 +53,9 @@ const getPendingLeaveRecords = async () => {
                 LT.leave_status = 'Pending'
             ORDER BY LT.leave_start ASC;
         `;
-        const [rows] = await pool.query(sql);
-        return rows;
+    const result = await pool.query(sql);
+    const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
+    return rows;
     } catch (error) {
         console.error("Error in getPendingLeaveRecords model:", error.message);
         throw new Error("Failed to retrieve pending leave records from the database.");
@@ -71,8 +73,9 @@ const updateLeaveStatus = async (leave_id, new_status) => {
             SET leave_status = ?
             WHERE leave_id = ?;
         `;
-        const [result] = await pool.query(sql, [new_status, leave_id]);
-        return result; // Contains info like affectedRows
+    const result = await pool.query(sql, [new_status, leave_id]);
+    // Normalize affected rows info for mysql2/pg
+    return result && result.rowCount !== undefined ? { affectedRows: result.rowCount } : (Array.isArray(result) && result[0] ? result[0] : result);
     } catch (error) {
         console.error("Error in updateLeaveStatus model:", error.message);
         throw new Error("Failed to update leave status in the database.");

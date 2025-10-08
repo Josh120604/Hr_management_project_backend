@@ -2,12 +2,12 @@ const { pool } = require("../config/db.js");
 
 const getAttendance = async() => {
     try {
-       let [row] = await pool.query(
+       const result = await pool.query(
         `
         SELECT
             ED.emp_id AS EmployeeID, -- Added emp_id here
             ED.name AS EmployeeName,
-            DATE_FORMAT(A.attendance_date, '%Y-%m-%d') AS attendance_date,
+            to_char(A.attendance_date::date, 'YYYY-MM-DD') AS attendance_date,
             A.attendance_status,
             A.clocked_in_time,
             A.attendance_state
@@ -18,7 +18,8 @@ const getAttendance = async() => {
         WHERE
             A.attendance_date = '2025-07-29';
         `)
-       return row
+       const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
+       return rows;
     } catch (error) {
         return 'Tough luck'
     }
@@ -30,7 +31,7 @@ const getAttendanceByDate = async (date = null) => {
             SELECT
                 ED.emp_id AS EmployeeID,
                 ED.name AS EmployeeName,
-                DATE_FORMAT(A.attendance_date, '%Y-%m-%d') AS attendance_date,
+                to_char(A.attendance_date::date, 'YYYY-MM-DD') AS attendance_date,
                 A.attendance_status,
                 A.clocked_in_time,
                 A.attendance_state
@@ -48,9 +49,9 @@ const getAttendanceByDate = async (date = null) => {
             params.push(date); 
         }
 
-        const [rows, fields] = await pool.query(sql, params); 
-
-        return rows; 
+    const result = await pool.query(sql, params);
+    const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
+    return rows;
     } catch (error) {
         console.error("Error in getAttendanceByDate model function:", error);
         throw error;
