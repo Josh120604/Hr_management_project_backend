@@ -20,7 +20,7 @@ exports.getAllSalariesWithAllDetails = async () => {
             JOIN 
                 department d ON s.department_id = d.department_id
             JOIN 
-                employeeedata emp ON s.emp_id = emp.emp_id`
+                employeedata emp ON s.emp_id = emp.emp_id`
         );
         const rows = result && result[0] ? result[0] : result;
         return rows;
@@ -47,11 +47,11 @@ exports.getSalaryDetailsByIdAndDate = async (emp_id, effective_date) => {
             JOIN 
                 department d ON s.department_id = d.department_id
             JOIN 
-                employeeedata emp ON s.emp_id = emp.emp_id
+                employeedata emp ON s.emp_id = emp.emp_id
             LEFT JOIN
-                EmployeeBankInfo b ON s.emp_id = b.emp_id
+                employeebankinfo b ON s.emp_id = b.emp_id
             LEFT JOIN
-                EmployeeTax t ON s.emp_id = t.emp_id
+                employeetax t ON s.emp_id = t.emp_id
             WHERE
                 s.emp_id = ? AND s.effective_date = ?`,
             [emp_id, effective_date]
@@ -68,7 +68,7 @@ exports.getSalaryDetailsByIdAndDate = async (emp_id, effective_date) => {
 exports.createSalary = async (salary) => {
     const { emp_id, department_id, hours_worked, deductions } = salary;
     try {
-        const employeeResult = await pool.query('SELECT emp_id FROM employeeedata WHERE emp_id = ?', [emp_id]);
+        const employeeResult = await pool.query('SELECT emp_id FROM employeedata WHERE emp_id = ?', [emp_id]);
         const employeeRows = employeeResult && employeeResult[0] ? employeeResult[0] : employeeResult;
         if (!employeeRows || employeeRows.length === 0) {
             throw new Error(`Employee with ID ${emp_id} not found`);
