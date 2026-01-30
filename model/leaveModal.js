@@ -14,7 +14,7 @@ const getLeaveRecords = async (emp_id = null) => {
             FROM
                 leavetable AS LT
             JOIN
-                employeeedata AS ED ON LT.emp_id = ED.emp_id
+                employeedata AS ED ON LT.emp_id = ED.emp_id
         `;
         const params = [];
 
@@ -48,7 +48,7 @@ const getPendingLeaveRecords = async () => {
             FROM
                 leavetable AS LT
             JOIN
-                employeeedata AS ED ON LT.emp_id = ED.emp_id
+                employeedata AS ED ON LT.emp_id = ED.emp_id
             WHERE
                 LT.leave_status = 'Pending'
             ORDER BY LT.leave_start ASC;
