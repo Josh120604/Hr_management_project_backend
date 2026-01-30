@@ -5,7 +5,7 @@ const { pool } = require("../config/db.js"); // Keep .js if it's explicitly name
 // Define the functions as const variables first
 const getEmployees = async () => {
     try {
-        const result = await pool.query('SELECT * FROM EmployeeData;');
+        const result = await pool.query('SELECT * FROM employeedata;');
         // Normalize result for mysql2 ([rows, fields]) and pg ({ rows })
         const rows = result && result.rows ? result.rows : (Array.isArray(result) ? result[0] : result);
         return rows;
