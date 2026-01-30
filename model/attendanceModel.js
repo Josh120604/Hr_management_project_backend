@@ -14,7 +14,7 @@ const getAttendance = async () => {
             FROM
                 attendance AS A
             INNER JOIN
-                employeeedata AS ED ON A.emp_id = ED.emp_id
+                employeedata AS ED ON A.emp_id = ED.emp_id
             WHERE
                 A.attendance_date = '2025-07-29';
             `
@@ -40,7 +40,7 @@ const getAttendanceByDate = async (date = null) => {
             FROM
                 attendance AS A
             INNER JOIN
-                employeeedata AS ED ON A.emp_id = ED.emp_id
+                employeedata AS ED ON A.emp_id = ED.emp_id
         `;
 
         const params = [];
