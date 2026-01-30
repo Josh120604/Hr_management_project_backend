@@ -18,7 +18,7 @@ exports.getAllReviewsWithAllDetails = async () => {
             JOIN 
                 department d ON r.department_id = d.department_id
             JOIN 
-                employeeedata emp ON r.emp_id = emp.emp_id`
+                employeedata emp ON r.emp_id = emp.emp_id`
         );
         const rows = result && result[0] ? result[0] : result;
         return rows;
@@ -43,13 +43,13 @@ exports.getReviewByEmployeeId = async (review_id) => {
                 r.rating,
                 d.department_name
             FROM
-                Reviews r
+                reviews r
             JOIN 
                 department d ON r.department_id = d.department_id
             JOIN 
-                employeeedata emp ON r.emp_id = emp.emp_id
+                employeedata emp ON r.emp_id = emp.emp_id
             JOIN
-                employeeedata reviewer_emp ON r.reviewer_emp_id = reviewer_emp.emp_id
+                employeedata reviewer_emp ON r.reviewer_emp_id = reviewer_emp.emp_id
             WHERE
                 r.review_id = ?`, [review_id]
         );
@@ -71,7 +71,7 @@ exports.addReview = async (review) => {
         const formattedReviewDate = parsedReviewDate.toISOString().split('T')[0];
 
         const result = await pool.query(
-            `INSERT INTO Reviews (emp_id, reviewer_emp_id, department_id, review_date, review_text, rating)
+            `INSERT INTO reviews (emp_id, reviewer_emp_id, department_id, review_date, review_text, rating)
             VALUES (?, ?, ?, ?, ?, ?)`, [emp_id, reviewer_emp_id, department_id, formattedReviewDate, review_text, rating]
         );
         const affected = result && result.affectedRows ? result.affectedRows : 0;
@@ -86,7 +86,7 @@ exports.updateReview = async (review_id, reviewData) => {
     const { emp_id, reviewer_emp_id, department_id, review_date, review_text, rating } = reviewData;
     try {
         const result = await pool.query(
-            `UPDATE Reviews 
+            `UPDATE reviews 
             SET 
                 emp_id = ?, 
                 reviewer_emp_id = ?, 
@@ -111,7 +111,7 @@ exports.updateReview = async (review_id, reviewData) => {
 exports.deleteReview = async (review_id) => {
     try {
         const result = await pool.query(
-            'DELETE FROM Reviews WHERE review_id = ?', [review_id]
+            'DELETE FROM reviews WHERE review_id = ?', [review_id]
         );
         const affected = result && result.affectedRows ? result.affectedRows : 0;
         if (affected === 0) {
