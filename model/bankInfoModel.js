@@ -3,7 +3,7 @@ const { pool } = require("../config/db.js");
 // READ
 exports.getBankInfoById = async (emp_id) => {
     try {
-        const result = await pool.query('SELECT bank_account_number, bank_name FROM EmployeeBankInfo WHERE emp_id = ?', [emp_id]);
+        const result = await pool.query('SELECT bank_account_number, bank_name FROM employeebankinfo WHERE emp_id = ?', [emp_id]);
         const rows = result && result[0] ? result[0] : result;
         return rows && rows[0] ? rows[0] : null;
     } catch (e) {
@@ -16,7 +16,7 @@ exports.getBankInfoById = async (emp_id) => {
 exports.createBankInfo = async (bankInfo) => {
     const { emp_id, bank_account_number, bank_name } = bankInfo;
     try {
-        const result = await pool.query('INSERT INTO EmployeeBankInfo(bank_account_number, emp_id, bank_name) VALUES (?, ?, ?)', [bank_account_number, emp_id, bank_name]);
+        const result = await pool.query('INSERT INTO employeebankinfo(bank_account_number, emp_id, bank_name) VALUES (?, ?, ?)', [bank_account_number, emp_id, bank_name]);
         const affected = result && result.affectedRows ? result.affectedRows : 0;
         if (affected === 0) {
             throw new Error('Failed to create bank information');
@@ -32,7 +32,7 @@ exports.createBankInfo = async (bankInfo) => {
 exports.updateBankInfo = async (emp_id, bankInfoUpdate) => {
     const { bank_account_number, bank_name } = bankInfoUpdate;
     try {
-        const result = await pool.query('UPDATE EmployeeBankInfo SET bank_account_number = ?, bank_name = ? WHERE emp_id = ?', [bank_account_number, bank_name, emp_id]);
+        const result = await pool.query('UPDATE employeebankinfo SET bank_account_number = ?, bank_name = ? WHERE emp_id = ?', [bank_account_number, bank_name, emp_id]);
         const affected = result && result.affectedRows ? result.affectedRows : 0;
         if (affected === 0) {
             return { message: 'No bank information found or no changes made' };
@@ -47,7 +47,7 @@ exports.updateBankInfo = async (emp_id, bankInfoUpdate) => {
 // DELETE
 exports.deleteBankInfo = async (emp_id) => {
     try {
-        const result = await pool.query('DELETE FROM EmployeeBankInfo WHERE emp_id = ?', [emp_id]);
+        const result = await pool.query('DELETE FROM employeebankinfo WHERE emp_id = ?', [emp_id]);
         const affected = result && result.affectedRows ? result.affectedRows : 0;
         if (affected === 0) {
             return { message: 'No bank information found to delete' };
