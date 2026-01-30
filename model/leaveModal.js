@@ -12,7 +12,7 @@ const getLeaveRecords = async (emp_id = null) => {
                 LT.leave_reason,
                 LT.leave_status
             FROM
-                LeaveTable AS LT
+                leavetable AS LT
             JOIN
                 employeeedata AS ED ON LT.emp_id = ED.emp_id
         `;
@@ -46,7 +46,7 @@ const getPendingLeaveRecords = async () => {
                 LT.leave_reason,
                 LT.leave_status
             FROM
-                LeaveTable AS LT
+                leavetable AS LT
             JOIN
                 employeeedata AS ED ON LT.emp_id = ED.emp_id
             WHERE
@@ -70,7 +70,7 @@ const updateLeaveStatus = async (leave_id, new_status) => {
         }
 
         const sql = `
-            UPDATE LeaveTable
+            UPDATE leavetable
             SET leave_status = ?
             WHERE leave_id = ?;
         `;
